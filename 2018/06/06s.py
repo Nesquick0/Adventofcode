@@ -9,14 +9,6 @@ def distanceToAll(x, y, positions):
   return distances
 
   
-def printWorld(positions):
-  for y in range(sizeY):
-    for x in range(sizeX):
-      value = world[y*sizeX + x]
-      print(value if (value >= 0) else ".", end=" ")
-    print("")
-    
-
 def main():
   with open("input.txt", "r") as file:
     input = file.readlines()
