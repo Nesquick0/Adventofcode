@@ -19,38 +19,36 @@ def runFirst(values):
   return result
 
 def runSecond(values):
-  for i in range(max(values)+1, 1_000_000+1):
-  #for i in range(max(values)+1, 100+1):
-    values.append(i)
-
-  minmax = (min(values), max(values))
+  # From https://github.com/StasDeep/Advent-of-Code/blob/387432fb767f152772cb9aace6ae8a6887679ab8/2020/23/solution.py
+  values = values + list(range(len(values) + 1, 1_000_000 + 1))
+  # Create linked list with dictionary that each value reference to next value.
+  d = {c1: c2 for c1, c2 in zip(values, values[1:] + [values[0]])}
+  valuesLen = len(values)
+  cur = values[0]
   for r in range(10_000_000):
-  #for r in range(1_000):
-    curCup = values[0]
-    pickup = values[1:4]
-    del values[1:4]
-    dest = curCup - 1
-    if (dest < minmax[0]):
-        dest = minmax[1]
-    destIndex = len(values)-1
+    x = cur
+    pickup = []
+    for _ in range(3):
+      pickup.append(d[x])
+      x = d[x]
+
+    dest = cur - 1
+    if (dest < 1):
+      dest = valuesLen
     while (dest in pickup):
       dest -= 1
-      if (dest < minmax[0]):
-        dest = minmax[1]
-    while (values[destIndex] != dest):
-      destIndex -= 1
-    values = values[:destIndex+1] + pickup + values[destIndex+1:]
-    values = values[1:] + values[:1]
-    if (r % 1 == 0 and r > 100):
-      print("===============================================")
-      for i in range(len(values)//30-10, len(values)//30+1):
-        print(" ".join(map(str, values[i*30:(i+1)*30])))
-      print(r)
-  print("")
+      if (dest < 1):
+        dest = valuesLen
+    # dest = next(
+    #     cup for i in count(1)
+    #     if (cup if (cup := cur - i) > 0 else (cup := len(values) + cup)) not in pickup
+    # )
+
+    d[cur], d[pickup[-1]], d[dest] = d[pickup[-1]], d[dest], d[cur]
+    cur = d[cur]
   
-  index1 = values.index(1)
-  result = values[index1+1] * values[index1+2]
-  return result
+  print(d[1], d[d[1]])
+  return d[1] * d[d[1]]
 
 
 def main():
@@ -66,7 +64,7 @@ def main():
   result = runFirst(values[:])
   print(result)
   
-  result = runSecond(values[:])
+  result = runSecond(values)
   print(result)
 
 
