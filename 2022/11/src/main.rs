@@ -152,12 +152,100 @@ fn part1(text: &String) {
     mostActive.reverse();
     println!("{:?}", mostActive);
     println!(
-        "Result: {}",
+        "Result: {}\n",
         mostActive.get(0).unwrap() * mostActive.get(1).unwrap()
     )
 }
 
-fn part2(_text: &String) {}
+fn part2(text: &String) {
+    let lines: Vec<&str> = text.lines().collect();
+    let patternMonkey = Regex::new(r"^Monkey (\d+):$").unwrap();
+    let mut Monkeys: Vec<RefCell<Monkey>> = Vec::new();
+    let mut devisibleTotal: i64 = 1; // Got idea from
+
+    for chunk in lines.chunks(7) {
+        // Parse simple values.
+        let id = patternMonkey
+            .captures(chunk[0])
+            .unwrap()
+            .get(1)
+            .unwrap()
+            .as_str()
+            .parse::<i64>()
+            .unwrap();
+        let items: Vec<i64> = chunk[1]
+            .replace("  Starting items: ", "")
+            .split(", ")
+            .collect::<Vec<&str>>()
+            .iter()
+            .map(|x| x.parse::<i64>().unwrap())
+            .collect::<Vec<i64>>();
+        let devisible = chunk[3]
+            .replace("  Test: divisible by ", "")
+            .parse::<i64>()
+            .unwrap();
+        let targetTrue = chunk[4]
+            .replace("    If true: throw to monkey ", "")
+            .parse::<i64>()
+            .unwrap();
+        let targetFalse = chunk[5]
+            .replace("    If false: throw to monkey ", "")
+            .parse::<i64>()
+            .unwrap();
+
+        // Parse operation.
+        let operationStr = chunk[2].replace("  Operation: new = old ", "");
+        let operation = parseOperation(&operationStr);
+
+        let monkey: Monkey = Monkey::new(
+            id,
+            items,
+            operation.0,
+            operation.1,
+            devisible,
+            targetTrue,
+            targetFalse,
+        );
+        devisibleTotal *= devisible;
+        Monkeys.push(RefCell::new(monkey));
+    }
+
+    // Simulate rounds.
+    for _ in 1..=10000 {
+        for monkey in Monkeys.iter() {
+            for item in monkey.borrow().items.iter() {
+                let mut newItem =
+                    (monkey.borrow().operation)(*item, monkey.borrow().operationValue);
+                newItem = newItem % devisibleTotal;
+                let target = if (newItem % monkey.borrow().devisible == 0) {
+                    Monkeys.get(monkey.borrow().targetTrue as usize).unwrap()
+                } else {
+                    Monkeys.get(monkey.borrow().targetFalse as usize).unwrap()
+                };
+                target.borrow_mut().items.push(newItem);
+            }
+            let inspections: i64 = monkey.borrow().items.len() as i64;
+            monkey.borrow_mut().countInspections += inspections;
+            monkey.borrow_mut().items.clear();
+        }
+    }
+    let mut mostActive: Vec<i64> = Vec::new();
+    for monkey in Monkeys.iter() {
+        println!(
+            "{} {}",
+            monkey.borrow().id,
+            monkey.borrow().countInspections
+        );
+        mostActive.push(monkey.borrow().countInspections);
+    }
+    mostActive.sort();
+    mostActive.reverse();
+    println!("{:?}", mostActive);
+    println!(
+        "Result: {}",
+        mostActive.get(0).unwrap() * mostActive.get(1).unwrap()
+    )
+}
 
 fn main() {
     let text: String = readToString("input.txt").expect("Bad file!");
